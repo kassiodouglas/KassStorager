@@ -1,0 +1,6 @@
+site_name: KassStorager
+repo_url: https://github.com/kassiodouglas/KassStorager
+repo_name: kassiodouglas/KassStorageras
+edit_url: tree/main/docs
+
+theme: material
