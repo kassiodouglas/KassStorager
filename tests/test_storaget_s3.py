@@ -12,11 +12,7 @@ STORAGE = "STORAGER"
 OTHER_STORAGE = "tests/storage_other"
 DIR = "test"
 
-configs3 = {
-    "bucket": "dados-servicos-clientes",
-    "access_key": "AKIAZL7QYCDCNNHOMANV",
-    "secret_key": "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",
-}
+configs3 = {}
 
 
 def conn():
