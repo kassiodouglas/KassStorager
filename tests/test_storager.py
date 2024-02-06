@@ -107,7 +107,7 @@ def test_copiar_arquivo_para_outro_storage():
 
 
 def test_mover_arquivo_para_outro_storage():
-    name = create_file("arquivo.txt")
+    name = "arquivo.txt"
 
     other_storage = Storager(OTHER_STORAGE)
     other_storage.make("other").getDir("other").deleteFile(name)
