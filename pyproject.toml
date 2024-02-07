@@ -1,9 +1,15 @@
 [tool.poetry]
 name = "kassstorager"
 version = "0.1.0"
-description = ""
-authors = ["cassio.douglas <kass.doug@gmail.com.br>"]
+description = "Biblioteca para gerenciamento de diretórios e arquivos"
+authors = ["kassio douglas <kass.doug@gmail.com.br>"]
 readme = "README.md"
+packages = [{include = "kassstorager"}]
+classifiers = [
+    "Natural Language :: Portuguese (Brazilian)",
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3.11",
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -40,4 +46,4 @@ docs = "mkdocs serve"
 pre_test = "task lint"
 test = "pytest -s -x --cov=kassstorager -vv"
 post_test = "coverage html"
-publish = "poetry publish -u __token__ -p $NOTAS_MUSICAIS_TOKEN"
+publish = "poetry publish --build"
