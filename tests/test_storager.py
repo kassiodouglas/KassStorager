@@ -39,7 +39,7 @@ def test_verificar_se_diretorio_existe():
 
 def test_verificar_se_diretorio_nao_existe():
     path = Path(f"{STORAGE}/{DIR}--")
-    message = f'Directory "{path}" not exists'
+    message = f"Directory not exists"
 
     with raises(
         Exception,

@@ -32,36 +32,45 @@ class StoragerAwsS3:
             self.selected_local_dir = dir
             return self
 
-        raise Exception(f'Directory "{dir}" not exists')
+        raise Exception(f"Directory not exists")
 
     def exists(self):
         return False if self.selected_local_dir is None else True
 
     def delete(self, force: bool = False):
-        response = self.__client.list_objects_v2(
-            Bucket=self.__bucket_name, Prefix=self.selected_local_dir
-        )
 
+        if not self.selected_local_dir.endswith("/"):
+            self.selected_local_dir += "/"
+
+        print(self.selected_local_dir)
         try:
-            if force == False:
-                if "Contents" in response:
-                    for obj in response.get("Contents", []):
-                        if obj["Key"][-1] != "/":
-                            raise OSError(
-                                f"Error to delete '{self.selected_local_dir}', directory not empty!"
-                            )
+            self.__client.delete_object(
+                Bucket=self.__bucket_name, Key=self.selected_local_dir
+            )
+            return True
+        except Exception as err:
+            raise Exception(err)
 
-                self.__client.delete_object(
-                    Bucket=self.__bucket_name, Key=f"{self.selected_local_dir}/"
-                )
+        # try:
+        #     if force == False:
+        #         if "Contents" in response:
+        #             for obj in response.get("Contents", []):
+        #                 if obj["Key"][-1] != "/":
+        #                     raise OSError(
+        #                         f"Error to delete '{self.selected_local_dir}', directory not empty!"
+        #                     )
 
-            else:
-                for obj in response.get("Contents", []):
-                    self.__client.delete_object(
-                        Bucket=self.__bucket_name, Key=obj["Key"]
-                    )
-        except OSError as err:
-            raise OSError(err)
+        #         self.__client.delete_object(
+        #             Bucket=self.__bucket_name, Key=f"{self.selected_local_dir}/"
+        #         )
+
+        #     else:
+        #         for obj in response.get("Contents", []):
+        #             self.__client.delete_object(
+        #                 Bucket=self.__bucket_name, Key=obj["Key"]
+        #             )
+        # except OSError as err:
+        #     raise OSError(err)
 
     def deleteFile(self, file_name: str):
         file = self.selected_local_dir + "/" + file_name

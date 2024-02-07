@@ -39,7 +39,7 @@ class StoragerOs:
             self.selected_local_dir = dir
             return self
 
-        raise Exception(f'Directory "{dir}" not exists')
+        raise Exception(f"Directory not exists")
 
     def exists(self):
         """Retorna se um diretório existe ou não no storage
