@@ -154,3 +154,5 @@ cython_debug/
 
 .txt
 pytest.ini
+.vscode
+desktop.ini

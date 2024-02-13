@@ -11,4 +11,4 @@ plugins:
 - mkdocstrings:
     handlers:
       python:
-        paths: [kassstorager]
+        paths: [KassStorager]
