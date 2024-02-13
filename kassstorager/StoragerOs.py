@@ -1,14 +1,18 @@
 import os
 import shutil
 from datetime import datetime as dt
+from datetime import timezone
 from pathlib import Path
 
 
 class StoragerOs:
-    def __init__(self, storage: str, config: dict) -> None:
+    def __init__(self, storage: str, config: dict, driver: str) -> None:
         self.storage = storage
+        self.driver = driver
         self.selected_local_dir = None
         self.selected_remote_dir = None
+        self.__ext = "*"
+        self.__filters = []
 
         self.files_to = []
 
@@ -112,44 +116,45 @@ class StoragerOs:
 
         return True
 
-    def copyTo(self, storager, ext="*", filters: list[str] = []):
-        selected_remote_dir = storager.selected_local_dir
+    def copyTo(self, storager):
+        selected_remote_dir = storager
         return self.__copymove(
             self.selected_local_dir,
             selected_remote_dir,
-            ext,
-            filters,
             moveOrCopy="copy",
         )
 
-    def moveTo(self, storager, ext="*", filters: list[str] = []):
-        selected_remote_dir = storager.selected_local_dir
+    def moveTo(self, storager):
+        selected_remote_dir = storager
         return self.__copymove(
             self.selected_local_dir,
             selected_remote_dir,
-            ext,
-            filters,
             moveOrCopy="move",
         )
 
-    def getFile(self, file_name: str):
+    def getFile(self, file_name: str, ext="*", filters: list[str] = []):
 
-        file = os.path.join(self.selected_local_dir, file_name)
-        self.files_to.append(file)
+        if file_name is not None:
+            file = os.path.join(self.selected_local_dir, file_name)
+            self.files_to.append(file)
+        else:
+            self.__filters = filters
+            self.__ext = ext
+
+            for file in os.listdir(self.selected_local_dir):
+                self.files_to.append(file)
+
         return self
 
     def __copymove(
         self,
         selected_local_dir: str,
         selected_remote_dir: str,
-        ext="*",
-        filters: list[str] = [],
         moveOrCopy: str = "copy",
     ):
         for file in self.files_to:
-            fielname = os.path.basename(file)
-            local_filePath = os.path.join(selected_local_dir, fielname)
-            remote_filepath = os.path.join(selected_remote_dir, fielname)
+            filename = os.path.basename(file)
+            local_filePath = os.path.join(selected_local_dir, filename)
 
             if os.path.exists(local_filePath) == False:
                 continue
@@ -157,35 +162,72 @@ class StoragerOs:
             if os.path.getsize(local_filePath) == 0:
                 continue
 
-            if not file.endswith(ext) and ext != "*":
+            if not file.endswith(self.__ext) and self.__ext != "*":
                 continue
 
             name = os.path.splitext(os.path.basename(file))[0]
-
             nextFilter = True
-            for filter in filters:
+            for filter in self.__filters:
                 if filter.lower() not in name.lower():
                     nextFilter = False
             if nextFilter == False:
                 continue
 
-            if os.path.isfile(remote_filepath):
-                local_date_modify = dt.fromtimestamp(os.path.getmtime(local_filePath))
-                remote_date_modify = dt.fromtimestamp(os.path.getmtime(remote_filepath))
+            if selected_remote_dir.storager_instance.driver == "s3":
+                clientS3 = selected_remote_dir.storager_instance._StoragerAwsS3__client
+                bucket = (
+                    selected_remote_dir.storager_instance._StoragerAwsS3__bucket_name
+                )
+                remote_filepath = selected_remote_dir.selected_local_dir + filename
 
-                if local_date_modify <= remote_date_modify:
-                    continue
+                try:
+                    object = clientS3.head_object(Bucket=bucket, Key=remote_filepath)
 
-            try:
-                if moveOrCopy == "copy":
-                    shutil.copy2(local_filePath, remote_filepath)
-                    term = "copied"
-                else:
-                    shutil.move(local_filePath, remote_filepath)
-                    term = "moved"
+                    isremote = True
+                except Exception as e:
+                    isremote = False
 
-            except IOError as e:
-                term = "copied" if moveOrCopy == "copy" else "moved"
-                raise Exception(f"Error in {term} file '{local_filePath}': {e}")
+                if isremote:
+                    local_date_modify = os.path.getmtime(local_filePath)
+                    remote_date_modify = (
+                        object["LastModified"] - dt(1970, 1, 1, tzinfo=timezone.utc)
+                    ).total_seconds()
+                    if local_date_modify <= remote_date_modify:
+                        continue
 
+                clientS3.upload_file(local_filePath, bucket, remote_filepath)
+
+                if moveOrCopy == "move":
+                    os.unlink(local_filePath)
+
+            elif selected_remote_dir.storager_instance.driver == "os":
+                remote_filepath = os.path.join(
+                    selected_remote_dir.selected_local_dir, filename
+                )
+                if os.path.isfile(remote_filepath):
+                    local_date_modify = dt.fromtimestamp(
+                        os.path.getmtime(local_filePath)
+                    )
+                    remote_date_modify = dt.fromtimestamp(
+                        os.path.getmtime(remote_filepath)
+                    )
+
+                    if local_date_modify <= remote_date_modify:
+                        continue
+
+                try:
+
+                    if moveOrCopy == "copy":
+                        shutil.copy2(local_filePath, remote_filepath)
+                        term = "copied"
+                    else:
+                        shutil.move(local_filePath, remote_filepath)
+                        term = "moved"
+
+                except IOError as e:
+                    term = "copied" if moveOrCopy == "copy" else "moved"
+                    raise Exception(f"Error in {term} file '{local_filePath}': {e}")
+
+            else:
+                raise Exception("Driver not supported")
         return True
