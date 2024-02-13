@@ -1,3 +1,1 @@
-from .Storager import *
-from .StoragerAwsS3 import *
-from .StoragerOs import *
+from .Storager import Storager
