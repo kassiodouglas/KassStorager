@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "KassStorager"
-version = "0.1.0"
+version = "1.0.0"
 description = "Biblioteca para gerenciamento de diretórios e arquivos"
 authors = ["kassio douglas <kass.doug@gmail.com.br>"]
 readme = "README.md"
